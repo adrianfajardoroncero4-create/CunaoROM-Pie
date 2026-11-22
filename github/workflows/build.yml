@@ -1,0 +1,31 @@
+name: Build CunaoROM Pie
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: Dependencias
+        run: |
+          sudo apt update
+          sudo apt install -y repo git bc bison flex
+      - name: Repo sync Lineage 16
+        run: |
+          mkdir lineage && cd lineage
+          repo init -u https://github.com/LineageOS/android.git -b lineage-16.0 --depth=1
+          repo sync -c -j4
+      - name: Copiar golden
+        run: |
+          git clone https://github.com/adrianfajardoroncero4-create/android_device_samsung_golden -b cm-14.1 device/samsung/golden
+          git clone https://github.com/adrianfajardoroncero4-create/android_kernel_samsung_golden kernel/samsung/golden
+          git clone https://github.com/adrianfajardoroncero4-create/android_vendor_samsung_golden vendor/samsung/golden
+      - name: Compilar
+        run: |
+          cd lineage
+          source build/envsetup.sh
+          brunch golden
+      - name: Subir ROM
+        uses: actions/upload-artifact@v3
+        with:
+          name: CunaoROM-Pie-golden
+          path: lineage/out/target/product/golden/*.zip
